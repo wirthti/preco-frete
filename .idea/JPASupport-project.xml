@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoGeneratorSettingsState">
+    <option name="ignoredFields">
+      <set>
+        <option value="" />
+      </set>
+    </option>
+    <option name="moduleName" value="api-preco-correios" />
+    <option name="moduleNameToSettings">
+      <map>
+        <entry key="api-preco-correios">
+          <value>
+            <ModuleSettings>
+              <option name="controllerParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="dtoParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="entityPackageName" value="br.com.wirth.apiprecocorreios.entities" />
+              <option name="entityParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="mapperXmlParentDirectory" value="D:\Projetos2024\api-preco-correios\src\main\resources" />
+              <option name="repositoryPackageName" value="br.com.wirth.apiprecocorreios.repositories" />
+              <option name="repositoryParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="serviceParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="voParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+            </ModuleSettings>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="useJakartaEE" value="true" />
+  </component>
+  <component name="DatabaseSettingsState">
+    <option name="language" value="pt-BR" />
+  </component>
+</project>

@@ -9,6 +9,7 @@ import br.com.wirth.apiprecocorreios.moovin.AtributosMoovin;
 import br.com.wirth.apiprecocorreios.moovin.PedidoMoovin;
 import br.com.wirth.apiprecocorreios.domain.repositories.PedidoFreteRastreioRepository;
 import br.com.wirth.apiprecocorreios.domain.repositories.PedidoWirthRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static br.com.wirth.apiprecocorreios.constants.Constants.*;
 
+@Slf4j
 @Service
 public class CorreioService {
     private final RestTemplate restTemplateCorreio;
@@ -99,6 +101,7 @@ public class CorreioService {
                             PedidoFreteRastreio pedidoFreteRastreio = new PedidoFreteRastreio(numPedido, pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio(),
                                     Double.parseDouble(dadosPreco.getPcFinal().replace(',','.')), LocalDateTime.now());
                             this.pedidoFreteRastreioRepository.save(pedidoFreteRastreio);
+                            log.info("Registro inserido: " + pedidoFreteRastreio.getPedido() + ", frete: " + pedidoFreteRastreio.getFreteCobrado() + "\n");
                         }
                     }
                 }

@@ -10,7 +10,7 @@
     </parent>
     <groupId>br.com.wirth</groupId>
     <artifactId>preco-frete</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>preco-frete</name>
     <description>preco-frete</description>
     <properties>

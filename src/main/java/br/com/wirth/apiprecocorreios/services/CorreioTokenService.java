@@ -38,7 +38,7 @@ public class CorreioTokenService {
         if (this.expiraEm == null){
             return true;
         }
-        return this.expiraEm.isBefore(LocalDateTime.now());
+        return this.expiraEm.isBefore(LocalDateTime.now().plusMinutes(5));
     }
 
 

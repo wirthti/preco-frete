@@ -1,14 +1,16 @@
 package br.com.wirth.apiprecocorreios.services;
 
-import br.com.wirth.apiprecocorreios.constants.Constants;
 import br.com.wirth.apiprecocorreios.apicorreio.objetos.RetornoPreco;
 import br.com.wirth.apiprecocorreios.apicorreio.objetos.RetornoRastro;
+import br.com.wirth.apiprecocorreios.constants.Constants;
 import br.com.wirth.apiprecocorreios.domain.entities.PedidoFreteRastreio;
+import br.com.wirth.apiprecocorreios.domain.entities.PedidoRevendaWirth;
 import br.com.wirth.apiprecocorreios.domain.entities.PedidoWirth;
+import br.com.wirth.apiprecocorreios.domain.repositories.PedidoFreteRastreioRepository;
+import br.com.wirth.apiprecocorreios.domain.repositories.PedidoRevendaWirthRepository;
+import br.com.wirth.apiprecocorreios.domain.repositories.PedidoWirthRepository;
 import br.com.wirth.apiprecocorreios.moovin.AtributosMoovin;
 import br.com.wirth.apiprecocorreios.moovin.PedidoMoovin;
-import br.com.wirth.apiprecocorreios.domain.repositories.PedidoFreteRastreioRepository;
-import br.com.wirth.apiprecocorreios.domain.repositories.PedidoWirthRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;
@@ -31,25 +33,33 @@ public class CorreioService {
     private final RestTemplate restTemplateCorreio;
     private final MoovinService moovinService;
     private final PedidoWirthRepository pedidoWirthRepository;
+    private final PedidoRevendaWirthRepository pedidoRevendaWirthRepository;
     private final PedidoFreteRastreioRepository pedidoFreteRastreioRepository;
 
-    public CorreioService(@Qualifier("restTemplateCorreio") RestTemplate restTemplateCorreio, MoovinService moovinService, PedidoWirthRepository pedidoWirthRepository, PedidoFreteRastreioRepository pedidoFreteRastreioRepository) {
+    public CorreioService(@Qualifier("restTemplateCorreio") RestTemplate restTemplateCorreio, MoovinService moovinService, PedidoWirthRepository pedidoWirthRepository, PedidoRevendaWirthRepository pedidoRevendaWirthRepository, PedidoFreteRastreioRepository pedidoFreteRastreioRepository) {
         this.restTemplateCorreio = restTemplateCorreio;
         this.moovinService = moovinService;
         this.pedidoWirthRepository = pedidoWirthRepository;
+        this.pedidoRevendaWirthRepository = pedidoRevendaWirthRepository;
         this.pedidoFreteRastreioRepository = pedidoFreteRastreioRepository;
     }
 
-    @Scheduled(cron = "0 30 01 * * *")
+    //@Scheduled(cron = "0 30 01 * * *")
+    @Scheduled(cron = "0 30 01,13 * * *")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void rotinaMaryJaneMoovin() throws Exception {
         List<PedidoFreteRastreio> pedidoFreteRastreioList = pedidoFreteRastreioRepository.findAllByDataAtualizacaoAfter(LocalDateTime.now().minusDays(7));
         List<PedidoMoovin> retornoMoovin = this.moovinService.buscaDadosPorStatusEData(new AtributosMoovin());
         List<PedidoWirth> pedidosWirth;
+        List<PedidoRevendaWirth> pedidosRevendaWirth;
         if (pedidoFreteRastreioList.isEmpty()){
             pedidosWirth = this.pedidoWirthRepository.findAllByPedidoclienteInAndCcompanhiaAndCtipopedido(
                     retornoMoovin.stream().map(PedidoMoovin::getCodigo_pedido).collect(Collectors.toList()),
                     "192", "14"
+            );
+
+            pedidosRevendaWirth = this.pedidoRevendaWirthRepository.findAllByPedidoclienteIn(
+                    retornoMoovin.stream().map(PedidoMoovin::getCodigo_pedido).collect(Collectors.toList())
             );
         }
         else {
@@ -58,10 +68,18 @@ public class CorreioService {
                     "192", "14",
                     pedidoFreteRastreioList.stream().map(PedidoFreteRastreio::getPedido).collect(Collectors.toList())
             );
+
+            pedidosRevendaWirth = this.pedidoRevendaWirthRepository.buscaAllByPedidoclienteInAndPedidoNotIn(
+                    retornoMoovin.stream().map(PedidoMoovin::getCodigo_pedido).collect(Collectors.toList()),
+                    pedidoFreteRastreioList.stream().map(PedidoFreteRastreio::getPedido).collect(Collectors.toList())
+            );
         }
+
         List<PedidoMoovin> pedidosSemFrete = new ArrayList<>();
         for (PedidoMoovin pedidoMoovin : retornoMoovin) {
             if (pedidosWirth.stream().anyMatch(pedidoWirth -> pedidoWirth.getPedidocliente().equals(pedidoMoovin.getCodigo_pedido()))) {
+                pedidosSemFrete.add(pedidoMoovin);
+            } else if (pedidosRevendaWirth.stream().anyMatch(pedidoWirth -> pedidoWirth.getPedidocliente().equals(pedidoMoovin.getCodigo_pedido()))) {
                 pedidosSemFrete.add(pedidoMoovin);
             }
         }
@@ -93,15 +111,25 @@ public class CorreioService {
                     if (retornoPreco.getStatusCode() == HttpStatus.OK) {
                         RetornoPreco dadosPreco = retornoPreco.getBody();
                         if (dadosPreco != null) {
-                            String numPedido = pedidosWirth.stream()
+                            Optional<String> numPedidoOptional = pedidosWirth.stream()
                                     .filter(pedidoWirth -> pedidoWirth.getPedidocliente().equals(pedidoMoovin.getCodigo_pedido()))
                                     .map(PedidoWirth::getPedido)
-                                    .findFirst()
-                                    .orElseThrow(() -> new RuntimeException("Erro"));
-                            PedidoFreteRastreio pedidoFreteRastreio = new PedidoFreteRastreio(numPedido, pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio(),
-                                    Double.parseDouble(dadosPreco.getPcFinal().replace(',','.')), LocalDateTime.now());
-                            this.pedidoFreteRastreioRepository.save(pedidoFreteRastreio);
-                            log.info("Registro inserido: " + pedidoFreteRastreio.getPedido() + ", frete: " + pedidoFreteRastreio.getFreteCobrado() + "\n");
+                                    .findFirst();
+                            if (numPedidoOptional.isEmpty()) {
+                                numPedidoOptional = pedidosRevendaWirth.stream()
+                                        .filter(pedidoWirth -> pedidoWirth.getPedidocliente().equals(pedidoMoovin.getCodigo_pedido()))
+                                        .map(item -> item.getId().getPedido())
+                                        .findFirst();
+                            }
+                            if (numPedidoOptional.isEmpty()) {
+                                throw new RuntimeException("Erro meu amiguinho");
+                            } else {
+                                String numPedido = numPedidoOptional.get();
+                                PedidoFreteRastreio pedidoFreteRastreio = new PedidoFreteRastreio(numPedido, pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio(),
+                                        Double.parseDouble(dadosPreco.getPcFinal().replace(',','.')), LocalDateTime.now());
+                                this.pedidoFreteRastreioRepository.save(pedidoFreteRastreio);
+                                log.info("Registro inserido: " + pedidoFreteRastreio.getPedido() + ", frete: " + pedidoFreteRastreio.getFreteCobrado() + "\n");
+                            }
                         }
                     }
                 }

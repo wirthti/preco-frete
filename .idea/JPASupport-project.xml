@@ -6,7 +6,7 @@
         <option value="" />
       </set>
     </option>
-    <option name="moduleName" value="api-preco-correios" />
+    <option name="moduleName" value="preco-frete" />
     <option name="moduleNameToSettings">
       <map>
         <entry key="api-preco-correios">
@@ -18,6 +18,21 @@
               <option name="entityParentDirectory" value="$PROJECT_DIR$/src/main/java" />
               <option name="mapperXmlParentDirectory" value="D:\Projetos2024\api-preco-correios\src\main\resources" />
               <option name="repositoryPackageName" value="br.com.wirth.apiprecocorreios.repositories" />
+              <option name="repositoryParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="serviceParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="voParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+            </ModuleSettings>
+          </value>
+        </entry>
+        <entry key="preco-frete">
+          <value>
+            <ModuleSettings>
+              <option name="controllerParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="dtoParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="entityPackageName" value="br.com.wirth.apiprecocorreios.domain.entities" />
+              <option name="entityParentDirectory" value="$PROJECT_DIR$/src/main/java" />
+              <option name="mapperXmlParentDirectory" value="Y:\IdeaProjects\preco-frete\src\main\resources" />
+              <option name="repositoryPackageName" value="br.com.wirth.apiprecocorreios.domain.repositories" />
               <option name="repositoryParentDirectory" value="$PROJECT_DIR$/src/main/java" />
               <option name="serviceParentDirectory" value="$PROJECT_DIR$/src/main/java" />
               <option name="voParentDirectory" value="$PROJECT_DIR$/src/main/java" />

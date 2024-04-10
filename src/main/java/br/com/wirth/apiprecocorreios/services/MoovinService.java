@@ -5,7 +5,6 @@ import br.com.wirth.apiprecocorreios.moovin.PedidoMoovin;
 import br.com.wirth.apiprecocorreios.moovin.RetornoMoovin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

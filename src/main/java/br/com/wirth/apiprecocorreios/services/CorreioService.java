@@ -24,6 +24,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static br.com.wirth.apiprecocorreios.constants.Constants.*;
 
@@ -45,13 +46,20 @@ public class CorreioService {
     }
 
     //@Scheduled(cron = "0 30 01 * * *")
+    //@Scheduled(fixedDelay = 1000000000L)
     @Scheduled(cron = "0 30 01,13 * * *")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void rotinaMaryJaneMoovin() throws Exception {
+
         List<PedidoFreteRastreio> pedidoFreteRastreioList = pedidoFreteRastreioRepository.findAllByDataAtualizacaoAfter(LocalDateTime.now().minusDays(7));
-        List<PedidoMoovin> retornoMoovin = this.moovinService.buscaDadosPorStatusEData(new AtributosMoovin());
+
+        List<PedidoMoovin> retornoMoovinTransporte = this.moovinService.buscaDadosPorStatusEData(new AtributosMoovin(17));
+        List<PedidoMoovin> retornoMoovinEntregue = this.moovinService.buscaDadosPorStatusEData(new AtributosMoovin(14));
+        List<PedidoMoovin> retornoMoovin = Stream.concat(retornoMoovinEntregue.stream(), retornoMoovinTransporte.stream()).toList();
+
         List<PedidoWirth> pedidosWirth;
         List<PedidoRevendaWirth> pedidosRevendaWirth;
+
         if (pedidoFreteRastreioList.isEmpty()){
             pedidosWirth = this.pedidoWirthRepository.findAllByPedidoclienteInAndCcompanhiaAndCtipopedido(
                     retornoMoovin.stream().map(PedidoMoovin::getCodigo_pedido).collect(Collectors.toList()),
@@ -105,6 +113,7 @@ public class CorreioService {
 
                     Map<String, String> params = populaParametros(pedidoMoovin, dadosRastro);
 
+                    log.info("Buscando frete do pedido " + pedidoMoovin.getCodigo_pedido() + ", CEP " + pedidoMoovin.getDadosEntrega().getCep());
                     HttpHeaders headers = new HttpHeaders();
                     HttpEntity<?> entity = new HttpEntity<>(headers);
                     ResponseEntity<RetornoPreco> retornoPreco = this.restTemplateCorreio.exchange(urlTemplate, HttpMethod.GET, entity, RetornoPreco.class, params);
@@ -126,7 +135,7 @@ public class CorreioService {
                             } else {
                                 String numPedido = numPedidoOptional.get();
                                 PedidoFreteRastreio pedidoFreteRastreio = new PedidoFreteRastreio(numPedido, pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio(),
-                                        Double.parseDouble(dadosPreco.getPcFinal().replace(',','.')), LocalDateTime.now());
+                                        Double.parseDouble(dadosPreco.getPcFinal().replace(',', '.')), LocalDateTime.now());
                                 this.pedidoFreteRastreioRepository.save(pedidoFreteRastreio);
                                 log.info("Registro inserido: " + pedidoFreteRastreio.getPedido() + ", frete: " + pedidoFreteRastreio.getFreteCobrado() + "\n");
                             }
@@ -140,7 +149,7 @@ public class CorreioService {
     private static Map<String, String> populaParametros(PedidoMoovin pedido, RetornoRastro dadosRastro) {
         Map<String, String> params = new HashMap<>();
         params.put("coProduto", pedido.getDadosTransporteMoovin().getCodigo_servico());
-        params.put("cepDestino", pedido.getDadosEntrega().getCep());
+        params.put("cepDestino", pedido.getDadosEntrega().getCep().replace("-", ""));
         params.put("cepOrigem", Constants.CORREIOS_CEP_ORIGEM);
         params.put("nuContrato", Constants.CORREIOS_NR_CONTRATO);
         params.put("nuDR", Constants.CORREIOS_DR_CONTRATO);

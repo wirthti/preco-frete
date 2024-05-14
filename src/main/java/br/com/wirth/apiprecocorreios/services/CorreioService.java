@@ -46,8 +46,8 @@ public class CorreioService {
     }
 
     //@Scheduled(cron = "0 30 01 * * *")
-    @Scheduled(fixedDelay = 1000000000L)
-    //@Scheduled(cron = "0 30 01,13 * * *")
+    //@Scheduled(fixedDelay = 1000000000L)
+    @Scheduled(cron = "0 30 01,13 * * *")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void rotinaMaryJaneMoovin() throws Exception {
 

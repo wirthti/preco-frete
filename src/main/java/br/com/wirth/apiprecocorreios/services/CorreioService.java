@@ -46,12 +46,12 @@ public class CorreioService {
     }
 
     //@Scheduled(cron = "0 30 01 * * *")
-    //@Scheduled(fixedDelay = 1000000000L)
-    @Scheduled(cron = "0 30 01,13 * * *")
+    @Scheduled(fixedDelay = 1000000000L)
+    //@Scheduled(cron = "0 30 01,13 * * *")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void rotinaMaryJaneMoovin() throws Exception {
 
-        List<PedidoFreteRastreio> pedidoFreteRastreioList = pedidoFreteRastreioRepository.findAllByDataAtualizacaoAfter(LocalDateTime.now().minusDays(7));
+        List<PedidoFreteRastreio> pedidoFreteRastreioList = pedidoFreteRastreioRepository.findAllByDataAtualizacaoAfter(LocalDateTime.now().minusDays(30));
 
         List<PedidoMoovin> retornoMoovinTransporte = this.moovinService.buscaDadosPorStatusEData(new AtributosMoovin(17));
         List<PedidoMoovin> retornoMoovinEntregue = this.moovinService.buscaDadosPorStatusEData(new AtributosMoovin(14));

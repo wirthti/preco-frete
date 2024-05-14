@@ -14,6 +14,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -38,7 +39,11 @@ public class MoovinService {
         final HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
         try {
             ResponseEntity<RetornoMoovin> result = restTemplateMoovin.postForEntity(API_MOOVIN, request, RetornoMoovin.class);
-            return Objects.requireNonNull(result.getBody()).getPedidosMoovin().stream().filter(x -> x.getDadosTransporteMoovin().getCodigo_transportadora().equals("19") || x.getDadosTransporteMoovin().getCodigo_transportadora().equals("20")).collect(Collectors.toList());
+            if (result.getBody() != null) {
+                return Objects.requireNonNull(result.getBody()).getPedidosMoovin().stream().filter(x -> x.getDadosTransporteMoovin().getCodigo_transportadora().equals("19") || x.getDadosTransporteMoovin().getCodigo_transportadora().equals("20")).collect(Collectors.toList());
+            } else {
+                return new ArrayList<>();
+            }
         } catch (Exception e) {
             throw new Exception("ERRO: " + e);
         }

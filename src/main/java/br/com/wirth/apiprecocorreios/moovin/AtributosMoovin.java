@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class AtributosMoovin implements Serializable {
 
     @JsonProperty("data_de")
-    private String data_de = LocalDateTime.now().minusDays(7).toString();
+    private String data_de = LocalDateTime.now().minusDays(30).toString();
     @JsonProperty("data_ate")
     private String data_ate = LocalDateTime.now().toString();
     @JsonProperty("codigo_status_pedido")

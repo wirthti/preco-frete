@@ -12,6 +12,7 @@ import br.com.wirth.apiprecocorreios.domain.repositories.PedidoWirthRepository;
 import br.com.wirth.apiprecocorreios.moovin.AtributosMoovin;
 import br.com.wirth.apiprecocorreios.moovin.PedidoMoovin;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -93,55 +94,59 @@ public class CorreioService {
         }
 
         for (PedidoMoovin pedidoMoovin : pedidosSemFrete) {
-            ResponseEntity<RetornoRastro> retornoRastro = this.restTemplateCorreio.getForEntity(API_BASE + API_RASTRO + pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio(), RetornoRastro.class);
-            if (retornoRastro.getStatusCode() == HttpStatus.OK) {
-                RetornoRastro dadosRastro = retornoRastro.getBody();
-                if (dadosRastro != null && dadosRastro.getObjetos().getFirst().getPeso() != null) {
-                    String urlTemplate = UriComponentsBuilder.fromHttpUrl(API_BASE + API_PRECO + pedidoMoovin.getDadosTransporteMoovin().getCodigo_servico())
-                            .queryParam("coProduto", "{coProduto}")
-                            .queryParam("cepDestino", "{cepDestino}")
-                            .queryParam("cepOrigem", "{cepOrigem}")
-                            .queryParam("nuContrato", "{nuContrato}")
-                            .queryParam("nuDR", "{nuDR}")
-                            .queryParam("psObjeto", "{psObjeto}")
-                            .queryParam("tpObjeto", "{tpObjeto}")
-                            .queryParam("comprimento", "{comprimento}")
-                            .queryParam("largura", "{largura}")
-                            .queryParam("altura", "{altura}")
-                            .encode()
-                            .toUriString();
+            if (!StringUtils.isBlank(pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio())) {
+                ResponseEntity<RetornoRastro> retornoRastro = this.restTemplateCorreio.getForEntity(API_BASE + API_RASTRO + pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio(), RetornoRastro.class);
+                if (retornoRastro.getStatusCode() == HttpStatus.OK) {
+                    RetornoRastro dadosRastro = retornoRastro.getBody();
+                    if (dadosRastro != null && dadosRastro.getObjetos().getFirst().getPeso() != null) {
+                        String urlTemplate = UriComponentsBuilder.fromHttpUrl(API_BASE + API_PRECO + pedidoMoovin.getDadosTransporteMoovin().getCodigo_servico())
+                                .queryParam("coProduto", "{coProduto}")
+                                .queryParam("cepDestino", "{cepDestino}")
+                                .queryParam("cepOrigem", "{cepOrigem}")
+                                .queryParam("nuContrato", "{nuContrato}")
+                                .queryParam("nuDR", "{nuDR}")
+                                .queryParam("psObjeto", "{psObjeto}")
+                                .queryParam("tpObjeto", "{tpObjeto}")
+                                .queryParam("comprimento", "{comprimento}")
+                                .queryParam("largura", "{largura}")
+                                .queryParam("altura", "{altura}")
+                                .encode()
+                                .toUriString();
 
-                    Map<String, String> params = populaParametros(pedidoMoovin, dadosRastro);
+                        Map<String, String> params = populaParametros(pedidoMoovin, dadosRastro);
 
-                    log.info("Buscando frete do pedido " + pedidoMoovin.getCodigo_pedido() + ", CEP " + pedidoMoovin.getDadosEntrega().getCep());
-                    HttpHeaders headers = new HttpHeaders();
-                    HttpEntity<?> entity = new HttpEntity<>(headers);
-                    ResponseEntity<RetornoPreco> retornoPreco = this.restTemplateCorreio.exchange(urlTemplate, HttpMethod.GET, entity, RetornoPreco.class, params);
-                    if (retornoPreco.getStatusCode() == HttpStatus.OK) {
-                        RetornoPreco dadosPreco = retornoPreco.getBody();
-                        if (dadosPreco != null) {
-                            Optional<String> numPedidoOptional = pedidosWirth.stream()
-                                    .filter(pedidoWirth -> pedidoWirth.getPedidocliente().equals(pedidoMoovin.getCodigo_pedido()))
-                                    .map(PedidoWirth::getPedido)
-                                    .findFirst();
-                            if (numPedidoOptional.isEmpty()) {
-                                numPedidoOptional = pedidosRevendaWirth.stream()
+                        log.info("Buscando frete do pedido {}, CEP {}", pedidoMoovin.getCodigo_pedido(), pedidoMoovin.getDadosEntrega().getCep());
+                        HttpHeaders headers = new HttpHeaders();
+                        HttpEntity<?> entity = new HttpEntity<>(headers);
+                        ResponseEntity<RetornoPreco> retornoPreco = this.restTemplateCorreio.exchange(urlTemplate, HttpMethod.GET, entity, RetornoPreco.class, params);
+                        if (retornoPreco.getStatusCode() == HttpStatus.OK) {
+                            RetornoPreco dadosPreco = retornoPreco.getBody();
+                            if (dadosPreco != null) {
+                                Optional<String> numPedidoOptional = pedidosWirth.stream()
                                         .filter(pedidoWirth -> pedidoWirth.getPedidocliente().equals(pedidoMoovin.getCodigo_pedido()))
-                                        .map(item -> item.getId().getPedido())
+                                        .map(PedidoWirth::getPedido)
                                         .findFirst();
-                            }
-                            if (numPedidoOptional.isEmpty()) {
-                                throw new RuntimeException("Erro meu amiguinho");
-                            } else {
-                                String numPedido = numPedidoOptional.get();
-                                PedidoFreteRastreio pedidoFreteRastreio = new PedidoFreteRastreio(numPedido, pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio(),
-                                        Double.parseDouble(dadosPreco.getPcFinal().replace(',', '.')), LocalDateTime.now());
-                                this.pedidoFreteRastreioRepository.save(pedidoFreteRastreio);
-                                log.info("Registro inserido: " + pedidoFreteRastreio.getPedido() + ", frete: " + pedidoFreteRastreio.getFreteCobrado() + "\n");
+                                if (numPedidoOptional.isEmpty()) {
+                                    numPedidoOptional = pedidosRevendaWirth.stream()
+                                            .filter(pedidoWirth -> pedidoWirth.getPedidocliente().equals(pedidoMoovin.getCodigo_pedido()))
+                                            .map(item -> item.getId().getPedido())
+                                            .findFirst();
+                                }
+                                if (numPedidoOptional.isEmpty()) {
+                                    throw new RuntimeException("Erro meu amiguinho");
+                                } else {
+                                    String numPedido = numPedidoOptional.get();
+                                    PedidoFreteRastreio pedidoFreteRastreio = new PedidoFreteRastreio(numPedido, pedidoMoovin.getDadosTransporteMoovin().getCodigo_rastreio(),
+                                            Double.parseDouble(dadosPreco.getPcFinal().replace(',', '.')), LocalDateTime.now());
+                                    this.pedidoFreteRastreioRepository.save(pedidoFreteRastreio);
+                                    log.info("Registro inserido: {}, frete: {}\n", pedidoFreteRastreio.getPedido(), pedidoFreteRastreio.getFreteCobrado());
+                                }
                             }
                         }
                     }
                 }
+            } else {
+                log.info("O pedido {} não tem código de rastreio!\n", pedidoMoovin.getCodigo_pedido());
             }
         }
     }

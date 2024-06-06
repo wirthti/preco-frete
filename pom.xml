@@ -12,7 +12,7 @@
 
     <groupId>br.com.wirth</groupId>
     <artifactId>preco-frete</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
     <name>preco-frete</name>
     <description>preco-frete</description>
 
@@ -44,12 +44,6 @@
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
             <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10.1</version>
         </dependency>
 
         <dependency>

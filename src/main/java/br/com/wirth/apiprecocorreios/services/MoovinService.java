@@ -27,20 +27,23 @@ public class MoovinService {
 
     public List<PedidoMoovin> buscaDadosPorStatusEData(AtributosMoovin atributosMoovin) throws Exception {
         final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("token", TOKEN_MOOVIN);
+
         RestTemplate restTemplateMoovin = new RestTemplate();
 
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String json = ow.writeValueAsString(atributosMoovin);
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+       /* MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("token", TOKEN_MOOVIN);
-        map.add("data", json);
-        final HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        map.add("data", json);*/
+
+        final HttpEntity<String> request = new HttpEntity<>(json, headers);
         try {
             ResponseEntity<RetornoMoovin> result = restTemplateMoovin.postForEntity(API_MOOVIN, request, RetornoMoovin.class);
             if (result.getBody() != null) {
-                return Objects.requireNonNull(result.getBody()).getPedidosMoovin().stream().filter(x -> x.getDadosTransporteMoovin().getCodigo_transportadora().equals("19") || x.getDadosTransporteMoovin().getCodigo_transportadora().equals("20")).collect(Collectors.toList());
+                return Objects.requireNonNull(result.getBody()).getPedidosMoovin().stream().filter(x -> x.getDadosTransporteMoovin().getCodigo_transportadora().equals("1") || x.getDadosTransporteMoovin().getCodigo_transportadora().equals("4")).collect(Collectors.toList());
             } else {
                 return new ArrayList<>();
             }

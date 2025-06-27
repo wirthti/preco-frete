@@ -2,7 +2,7 @@ package br.com.wirth.apiprecocorreios.constants;
 
 
 public abstract class Constants {
-    public static final String TOKEN_MOOVIN = "337239a758cd890350698faafd8c2ecb";
+    public static final String TOKEN_MOOVIN = "D8F2A71B9C4E6DFF1234AB67E09CDE88F3A17C4425BE77F99D3C1A54B06E2CDA";
     public static final String API_MOOVIN = "https://maryjane.integration.moovin.com.br/webservice/getpedidos/json/";
     public static final String USUARIO_CORREIO = "wirthfatura";
     public static final String SENHA_CORREIO = "TJtXJhPvbygqGRtCVFgHKGxdSd6dZ4cNEhnhFQnP";
